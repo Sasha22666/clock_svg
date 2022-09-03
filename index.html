@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="utf-8" />
+    <title>CLOCK_SVG</title>
+
+</head>
+
+<body>
+    
+    <script>
+        const CLOCK_NUMBER = 12; //число чисел на циферблате
+        const RADIUS = 300; //радиус часов в пикселях 
+        const SDVIG_STR=1.1;
+        const urlNS = "http://www.w3.org/2000/svg";
+        let angleValue = 0; 
+	    let distanceOfDigits = 30; // расстояние в градусах между цифрами на часах
+        let clockRadius=RADIUS*2;
+        let clockNumberRadius=RADIUS*0.3;
+        let clockNumberOkrRadius=RADIUS*0.8;
+        let numberSize=RADIUS*0.2;
+        let strWidth=RADIUS*0.03;
+        let strHeithChas=RADIUS*0.6;
+        let strWidthMin=RADIUS*0.02;
+        let strWidthSek=RADIUS*0.01;
+        let strHeithSek=RADIUS*0.9;
+       
+       const konteiner=document.createElementNS(urlNS,'svg'); //контейнер, в котором часы
+       konteiner.setAttribute('width',clockRadius);
+       konteiner.setAttribute('height',clockRadius)
+       konteiner.className='konteiner';
+
+       const clock=document.createElementNS(urlNS,'circle');//создаем сами часы
+       clock.setAttribute("fill","yellow");
+       clock.setAttribute("r",RADIUS);
+       clock.setAttribute("cx",RADIUS);
+       clock.setAttribute("cy",RADIUS);
+       konteiner.append(clock);
+
+       svgCenterX=RADIUS; //узнаем центр svg по X
+       svgCenterY=RADIUS; //узнаем центр svg по Y
+
+        let arrClockNumber = [];
+       
+        for (let i=1; i<=CLOCK_NUMBER; i++) {
+            arrClockNumber[i]=document.createElementNS(urlNS,'circle'); //кружок, в котором будут цифры
+            arrClockNumber[i].setAttribute("r",clockNumberRadius/2);
+            arrClockNumber[i].setAttribute("fill","green");
+            arrClockNumber[i].className='clockNumber';
+                   
+            angleValue += distanceOfDigits; // по кругу в цикле продвигаемся на шаг через 30 градусов
+            const angle = angleValue / 180 * Math.PI; // градусы переводим в радианы
+            let greenCenterX=Math.round(svgCenterX+clockNumberOkrRadius*Math.sin(angle));
+            let greenCenterY=Math.round(svgCenterY-clockNumberOkrRadius*Math.cos(angle));
+
+            arrClockNumber[i].setAttribute("cx",greenCenterX);
+            arrClockNumber[i].setAttribute("cy",greenCenterY);
+                     
+            const clockNumberText=document.createElementNS(urlNS,'text');
+            clockNumberText.innerHTML=i;
+            clockNumberText.setAttribute('x',greenCenterX);
+            clockNumberText.setAttribute("y",greenCenterY);
+            clockNumberText.setAttribute("text-anchor", "middle");
+	        clockNumberText.setAttribute("dominant-baseline", "central");
+            clockNumberText.style.fontSize=numberSize/2;
+            konteiner.append(arrClockNumber[i]);
+            konteiner.append(clockNumberText);
+        }
+
+        const numberClockText=document.createElementNS(urlNS,'text');
+        numberClockText.innerHTML='00:00:00';
+        numberClockText.setAttribute('x',svgCenterX);
+        numberClockText.setAttribute('y',svgCenterY/2);
+        numberClockText.setAttribute("text-anchor", "middle");
+        numberClockText.setAttribute("dominant-baseline", "central");
+        numberClockText.style.fontSize=numberSize;
+        konteiner.append(numberClockText);
+
+        const strChas=document.createElementNS(urlNS,'line'); //создаем часовую стрелку 
+        strChas.setAttribute('x2',svgCenterX);
+        strChas.setAttribute('y2',svgCenterY*SDVIG_STR);
+        strChas.setAttribute('x1',svgCenterX);
+        strChas.setAttribute('y1',svgCenterY-strHeithChas);
+        strChas.setAttribute("stroke-width",strWidth);
+        strChas.setAttribute("stroke-linecap", "round");
+        strChas.setAttribute("stroke","black");
+        konteiner.append(strChas);
+
+        const strMin=document.createElementNS(urlNS,'line'); //создаем часовую стрелку 
+        strMin.setAttribute('x2',svgCenterX);
+        strMin.setAttribute('y2',svgCenterY*SDVIG_STR);
+        strMin.setAttribute('x1',svgCenterX);
+        strMin.setAttribute('y1',svgCenterY-clockNumberOkrRadius);
+        strMin.setAttribute("stroke-width",strWidthMin);
+        strMin.setAttribute("stroke-linecap", "round");
+        strMin.setAttribute("stroke","black");
+        konteiner.append(strMin);
+
+        const strSek=document.createElementNS(urlNS,'line'); //создаем часовую стрелку 
+        strSek.setAttribute('x2',svgCenterX);
+        strSek.setAttribute('y2',svgCenterY*SDVIG_STR);
+        strSek.setAttribute('x1',svgCenterX);
+        strSek.setAttribute('y1',svgCenterY-strHeithSek);
+        strSek.setAttribute("stroke-width",strWidthSek);
+        strSek.setAttribute("stroke-linecap", "round");
+        strSek.setAttribute("stroke","black");
+        konteiner.append(strSek);
+        document.body.append(konteiner);
+
+         function updateTime() {
+            let hours, minutes, seconds;
+            const ANGLE_SEK=360/60; //в полном круге 360градусов, секундная стрелка делает оборот за 60 секунд, значит это 6 градусов в секунду
+            const ANGLE_HOURS=360/12; //часовая стрелка делает оборот за 12 часов
+          
+            let currTime=new Date();
+            let currTimeStr=formatDateTime(currTime);
+            numberClockText.innerHTML=currTimeStr; //добавляем в цифровые часы время в правильном формате 
+            
+           
+            strSek.setAttribute('transform','rotate('+ seconds*ANGLE_SEK+' '+RADIUS+' '+RADIUS+')');//задаем угол стрелок
+            strMin.setAttribute('transform','rotate('+Number(minutes*ANGLE_SEK+(seconds*ANGLE_SEK/60))+' '+RADIUS+' '+RADIUS+')');
+            strChas.setAttribute('transform','rotate('+Number((hours-12)*ANGLE_HOURS+(minutes*ANGLE_HOURS/60))+' '+RADIUS+' '+RADIUS+')');
+
+            //функция "красивого" для отображения цифровых часов
+            function formatDateTime(dataNow) {
+            hours=dataNow.getHours();
+            minutes=dataNow.getMinutes();
+            seconds=dataNow.getSeconds();
+            return str0l(hours,2) + ':' + str0l(minutes,2) + ':' + str0l(seconds,2);}
+            function str0l(val,len) {
+            let strVal=val.toString();
+            while ( strVal.length < len )
+                strVal='0'+strVal;
+                return strVal;
+            }
+            setTimeout('updateTime()',1000); 
+        }
+ 
+    updateTime();
+   </script>
+</body>
+</html>
